@@ -1,4 +1,8 @@
+### TST Number Navigation
+is a Firefox addon. Here is the description I gave on its <a href="https://addons.mozilla.org/en-US/firefox/addon/tree-style-tab/">Product page</a>:
+
 ⚠ This addon extends and works only with <a href="https://addons.mozilla.org/en-US/firefox/addon/tree-style-tab/">Tree Style Tab</a>.
+
 Use your number keys to zip around within your tree of tabs, and other things.
 
 The shortcuts "select-sibling-number-1" through "select-sibling-number-9" allow you to focus the Nth sibling tab of the currently active tab.
@@ -13,7 +17,9 @@ In addition to creating shortcuts, you can also use TST Number Navigation by int
 
 To set this up, add mappings to your Vimium C settings that send messages to TST Number Navigation. For example:
 
-<b>Start of example Vimium C mappings</b>
+<b>
+Start of example Vimium C mappings
+</b>
 unmap t
 unmap T
 
@@ -54,7 +60,8 @@ While Vimium C mappings are very nice, you should still make keyboard shortcuts 
 
 To create those shortcuts, go to the url about:addons > Click on the gear in the top left > Manage Extensions Shortcuts
 
-<a href="https://github.com/csterlent/tst-num-nav">Github</a>
+<a href="https://github.com/csterlent/tst-num-nav">Github</a></br>
+
 Here's the full list of shortcuts:
 
 focus-parent-set-downstream
