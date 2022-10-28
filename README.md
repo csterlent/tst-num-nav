@@ -62,24 +62,24 @@ To create those shortcuts, go to the url about:addons > Click on the gear in the
 
 Here's the full list of shortcuts:
 
-focus-parent-set-downstream
-focus-parent
-focus-downstream
-focus-first-child
-focus-sibling-number-1
-focus-sibling-number-2
-focus-sibling-number-3
-focus-sibling-number-4
-focus-sibling-number-5
-focus-sibling-number-6
-focus-sibling-number-7
-focus-sibling-number-8
-focus-sibling-number-9
-create-child-tab
-create-sibling-tab
-focus-next-sibling
-focus-previous-sibling
-close-tree
-close-children
-focus-root
-focus-root-set-downstream
+focus-parent-set-downstream</br>
+focus-parent</br>
+focus-downstream</br>
+focus-first-child</br>
+focus-sibling-number-1</br>
+focus-sibling-number-2</br>
+focus-sibling-number-3</br>
+focus-sibling-number-4</br>
+focus-sibling-number-5</br>
+focus-sibling-number-6</br>
+focus-sibling-number-7</br>
+focus-sibling-number-8</br>
+focus-sibling-number-9</br>
+create-child-tab</br>
+create-sibling-tab</br>
+focus-next-sibling</br>
+focus-previous-sibling</br>
+close-tree</br>
+close-children</br>
+focus-root</br>
+focus-root-set-downstream</br>
