@@ -50,7 +50,7 @@ map 6 sendToExtension data="focus-sibling-number-6" id="tst-num-nav@example.com"
 map 7 sendToExtension data="focus-sibling-number-7" id="tst-num-nav@example.com"
 map 8 sendToExtension data="focus-sibling-number-8" id="tst-num-nav@example.com"
 map 9 sendToExtension data="focus-sibling-number-9" id="tst-num-nav@example.com"
-<b>End of example Vimium C mappings</b>
+</br><b>End of example Vimium C mappings</b>
 
 Vimium C is the reason why I have re-implemented some commands that were already available with TST alone. I wanted to use them through Vimium C.
 
