@@ -1,5 +1,5 @@
 ### TST Number Navigation
-is a Firefox addon. Here is the description I gave on its <a href="https://addons.mozilla.org/en-US/firefox/addon/tree-style-tab/">Product page</a>:
+is a Firefox addon. Here is the description I gave on its <a href="https://addons.mozilla.org/en-US/firefox/addon/tst-number-navigation/">Product page</a>:
 
 ⚠ This addon extends and works only with <a href="https://addons.mozilla.org/en-US/firefox/addon/tree-style-tab/">Tree Style Tab</a>.
 
