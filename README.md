@@ -1,85 +1,97 @@
 ### TST Number Navigation
-is a Firefox addon. Here is the description I gave on its <a href="https://addons.mozilla.org/en-US/firefox/addon/tst-number-navigation/">Product page</a>:
 
 ⚠ This addon extends and works only with <a href="https://addons.mozilla.org/en-US/firefox/addon/tree-style-tab/">Tree Style Tab</a>.
 
-Use your number keys to zip around within your tree of tabs, and other things.
+Use your number keys to zip around within your tree of tabs, and other things. The following shortcuts are the only functionality that is provided. You must configure the shortcuts yourself through about:addons then clicking the gear icon.
 
-The shortcuts "select-sibling-number-1" through "select-sibling-number-9" allow you to focus the Nth sibling tab of the currently active tab.
+The shortcuts "select-sibling-number-1" through "select-sibling-number-20" allow you to focus (go to) the Nth sibling tab of the currently active tab.
 
-The shortcuts "focus-parent-set-downstream" lets you focus your parent tab, and remember where you came from so that "focus-downstream" can take you there quickly in the future.
+The shortcut "focus-parent-set-downstream" lets you focus your parent tab, and remember where you came from so that "focus-downstream" can take you there quickly in the future.
 
 The shortcut "focus-root-set-downstream" will take you all the way to the top of the tree, and you can "focus-downstream" repeatedly to get back where you were.
 
-There are some others that are already available as TST shortcuts, but I have re-implemented them. I explain why below.
+Finally, "indent-tree" and "outdent-tree-safe" can take your sub-tree higher or lower in the hierarchy. The difference between these commands and the equivalent commands in "TST More Tree Commands" is that the outdent command will not leave you with two sibling trees non-collapsed at the same time.
 
-In addition to creating shortcuts, you can also use TST Number Navigation by integrating with the add-on <a href="https://addons.mozilla.org/en-US/firefox/addon/vimium-c/">Vimium C</a>. This allows you to execute commands without reaching for a modifier key, and it allows you to get around some pages that will intercept your keystrokes and block your precious shortcuts from registering.
+### Purple Counters:)
 
-To set this up, add mappings to your Vimium C settings that send messages to TST Number Navigation. For example:
+When using this addon, you will have to jump to each tab based on how it is numbered among its siblings. So, you might appreciate a small indicator showing that number.
 
-<b>Start of example Vimium C mappings</b></br>
-unmap t
-unmap T
+You can add this CSS to Tree Style Tab options > Advanced, and each tab will get its own purple indicator. You don't have to make them purple, you just really should!!
 
-map w sendToExtension data="close-tree" id="tst-num-nav@example.com"
-map W sendToExtension data="close-children" id="tst-num-nav@example.com"
-map e sendToExtension data="focus-downstream" id="tst-num-nav@example.com"
-map u sendToExtension data="focus-parent-set-downstream" id="tst-num-nav@example.com"
-map E sendToExtension data="focus-next-sibling" id="tst-num-nav@example.com"
-map U sendToExtension data="focus-previous-sibling" id="tst-num-nav@example.com"
-map t sendToExtension data="create-sibling-tab" id="tst-num-nav@example.com"
-map T sendToExtension data="create-child-tab" id="tst-num-nav@example.com"
-map q sendToExtension data="focus-root-set-downstream" id="tst-num-nav@example.com"
+This is just an example to help you along, so don't do it exactly the same as me. A lot of this CSS comes straight from piroor's docs.
 
-unmap 1
-unmap 2
-unmap 3
-unmap 4
-unmap 5
-unmap 6
-unmap 7
-unmap 8
-unmap 9
+```
+/* Delete the close button to make room for counter */
+tab-item tab-closebox {
+	display: none;
+}
 
-map 1 sendToExtension data="focus-sibling-number-1" id="tst-num-nav@example.com"
-map 2 sendToExtension data="focus-sibling-number-2" id="tst-num-nav@example.com"
-map 3 sendToExtension data="focus-sibling-number-3" id="tst-num-nav@example.com"
-map 4 sendToExtension data="focus-sibling-number-4" id="tst-num-nav@example.com"
-map 5 sendToExtension data="focus-sibling-number-5" id="tst-num-nav@example.com"
-map 6 sendToExtension data="focus-sibling-number-6" id="tst-num-nav@example.com"
-map 7 sendToExtension data="focus-sibling-number-7" id="tst-num-nav@example.com"
-map 8 sendToExtension data="focus-sibling-number-8" id="tst-num-nav@example.com"
-map 9 sendToExtension data="focus-sibling-number-9" id="tst-num-nav@example.com"
-</br><b>End of example Vimium C mappings</b>
+/* Move the mute/unmute button, text box, and indicator for no. of collapsed tabs, over to make room for the counter */
+tab-counter, tab-label, tab-sound-button {
+  margin-right: 12px;
+}
 
-Vimium C is the reason why I have re-implemented some commands that were already available with TST alone. I wanted to use them through Vimium C.
+/* Stuff to make extra items work */
+tab-item .extra-items-container.behind {
+  z-index: unset !important;
+}
 
-While Vimium C mappings are very nice, you should still make keyboard shortcuts to use this add-on. The reason is that Vimium C doesn't work on some pages such as "about:about" or while you're inputting text into a form.
+/* Extra item style, very pretty in purple */
+tab-item .extra-items-container.behind::after {
+  margin-right: 0px;
+  background: purple;
+  color: white;
+  font-size: x-small;
+  font-family: monospace;
+  right: 0.2em;
+  padding: 0.2em;
+  pointer-events: none;
+  position: absolute;
+  bottom: 0.2em;
+  z-index: 1000;
+}
 
-To create those shortcuts, go to the url about:addons > Click on the gear in the top left > Manage Extensions Shortcuts
-
-<a href="https://github.com/csterlent/tst-num-nav">Github</a>
-
-Here's the full list of shortcuts:
-
-focus-parent-set-downstream</br>
-focus-parent</br>
-focus-downstream</br>
-focus-first-child</br>
-focus-sibling-number-1</br>
-focus-sibling-number-2</br>
-focus-sibling-number-3</br>
-focus-sibling-number-4</br>
-focus-sibling-number-5</br>
-focus-sibling-number-6</br>
-focus-sibling-number-7</br>
-focus-sibling-number-8</br>
-focus-sibling-number-9</br>
-create-child-tab</br>
-create-sibling-tab</br>
-focus-next-sibling</br>
-focus-previous-sibling</br>
-close-tree</br>
-close-children</br>
-focus-root</br>
-focus-root-set-downstream</br>
+/* Counter calculation */
+#tabbar {
+  counter-reset: c0 c1 c2 c3 c4 c5 c6 c7;
+}
+tab-item:not(.collapsed)[data-level="0"] .extra-items-container.behind::after {
+  counter-increment: c0;
+  counter-set: c1;
+  content: counter(c0);
+}
+tab-item:not(.collapsed)[data-level="1"] .extra-items-container.behind::after {
+  counter-increment: c1;
+  counter-set: c2;
+  content: counter(c1);
+}
+tab-item:not(.collapsed)[data-level="2"] .extra-items-container.behind::after {
+  counter-increment: c2;
+  counter-set: c3;
+  content: counter(c2);
+}
+tab-item:not(.collapsed)[data-level="3"] .extra-items-container.behind::after {
+  counter-increment: c3;
+  counter-set: c4;
+  content: counter(c3);
+}
+tab-item:not(.collapsed)[data-level="4"] .extra-items-container.behind::after {
+  counter-increment: c4;
+  counter-set: c5;
+  content: counter(c4);
+}
+tab-item:not(.collapsed)[data-level="5"] .extra-items-container.behind::after {
+  counter-increment: c5;
+  counter-set: c6;
+  content: counter(c5);
+}
+tab-item:not(.collapsed)[data-level="6"] .extra-items-container.behind::after {
+  counter-increment: c6;
+  counter-set: c7;
+  content: counter(c6);
+}
+tab-item:not(.collapsed)[data-level="7"] .extra-items-container.behind::after {
+  counter-increment: c7;
+  content: counter(c7);
+}
+```

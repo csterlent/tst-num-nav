@@ -2,297 +2,164 @@
 
 const TST_ID = 'treestyletab@piro.sakura.ne.jp';
 
-async function registerToTST() {
-	try {
-		//const base = `moz-extension://${location.host}`;
-		await browser.runtime.sendMessage(TST_ID, {
-			type: 'register-self',
-			name: browser.i18n.getMessage('extensionName'),
-			//icons: browser.runtime.getManifest().icons,
-		});
-	}
-	catch(_error) {
-		// TST is not available
-	}
-}
-registerToTST();
-
-browser.runtime.onMessageExternal.addListener((message, sender) => {
-	switch (sender.id) {
-		case TST_ID:
-			switch (message.type) {
-				case 'ready':
-					registerToTST();
-					break;
-			}
-			break;
-	}
-});
-
-// mine
-
-// Links tabs to their downstream tab, or "favorite children" for downstream commands.
-// Holds up to 44 objects, so up to 44 downstream tabs can be held.
-const favs = [];
-
-// Gets the tree structure array from TST
-async function getStructure() {
-	// Get tree structure of entire tabs
-	return await browser.runtime.sendMessage(TST_ID, {
-		type:   'get-tree-structure',
-		tab: '*'
-	});
+// Gets the subtree structure and information for a specific tab from TST
+// The tab is selected by the selector, which is either a tab ID or a TST alias like 'active'.
+async function getStructure(selector) {
+  return await browser.runtime.sendMessage(TST_ID, {
+    type: 'get-tree',
+    tab: selector
+  });
 }
 
-// Gets the active tab object from browser.tabs
-async function getActiveTab() {
-	const [activeTab, ] = await browser.tabs.query({
-		active: true,
-		currentWindow: true
-	});
-	return activeTab;
+// Focuses a tab through TST
+// The tab is selected by the selector, which is either a tab ID or a TST alias like 'active'.
+async function focus(selector) {
+  await browser.runtime.sendMessage(TST_ID, {
+    type: 'focus',
+    tab: selector,
+    interval: -1
+  });
 }
 
-// Simply focuses whatever argument passed, which can be a tab ID or 'parent' 'root' etc
-async function focus(x) {
-	await browser.runtime.sendMessage(TST_ID, {
-		type:     'focus',
-		tab:      x, // required, tabs.Tab.id or alias
-		silently: false // optional, boolean (default=false)
-	});
-}
-
-// Listen for commands from other extensions like Vimium C.
-browser.runtime.onMessageExternal.addListener((message, sender) => {
-	executeCommand(message.data);
-});
-
-// Listen for commands from shortcuts.
+// Listen for commands from shortcuts. Pass execution to a more specific handler depending on the
+// shortcut that was inputted.
 browser.commands.onCommand.addListener(executeCommand);
 
 function executeCommand(command) {
-	if (command === 'focus-parent-set-downstream') {
-		focusParentSetDownstream();
-	}
-	else if (command === 'focus-parent') {
-		focus('parent');
-	}
-	else if (command === 'focus-downstream') {
-		focusDownstream();
-	}
-	else if (command === 'focus-first-child') {
-		focusFirstChild();
-	}
-	else if (command.startsWith("focus-sibling-number-")) {
-		focusSiblingNumber(command.charAt(command.length-1));
-	}
-	else if (command === 'create-child-tab') {
-		createChildTab();
-	}
-	else if (command === 'create-sibling-tab') {
-		createSiblingTab();
-	}
-	else if (command === 'focus-next-sibling') {
-		focus('nextSibling');
-	}
-	else if (command === 'focus-previous-sibling') {
-		focus('previousSibling');
-	}
-	else if (command === 'close-tree') {
-		closeTree();
-	}
-	else if (command === 'close-children') {
-		closeChildren();
-	}
-	else if (command === 'focus-root') {
-		focus('root');
-	}
-	else if (command === 'focus-root-set-downstream') {
-		focusRootSetDownstream();
-	}
+  if (command === 'focus-parent-set-downstream') {
+    focusParentSetDownstream();
+  }
+  else if (command === 'focus-root-set-downstream') {
+    focusRootSetDownstream();
+  }
+  else if (command === 'focus-downstream') {
+    focusDownstream();
+  }
+  else if (command === 'indent-tree') {
+    indentTree();
+  }
+  else if (command === 'outdent-tree-safe') {
+    outdentTreeSafe();
+  }
+  else if (command.startsWith('focus-sibling-number-')) {
+    const [number,] = command.match('\\d+'); // Extract the number from command with a regex
+    focusSiblingNumber(number);
+  }
 }
 
+// A global variable mapping tabs to tabs. A parent tab is mapped to one of its children, which is
+// its "downstream child" or "downstream". This child is more easily accessed by the user.
+const stream = new Map();
+
+// The rest of this file is functions that handle each keyboard shortcut.
+
+// Get the parent of the active tab, and set its downstream to the active tab. Then focus the
+// parent tab.
 async function focusParentSetDownstream() {
-	const oldTab = await getActiveTab();
+  const tree = await getStructure('active');
+  const activeId = tree.id;
+  const parentId = tree.ancestorTabIds[0];
 
-	const success = await focus('parent');
+  focus(parentId);
 
-	const newTab = await getActiveTab();
-
-	const structure = await getStructure();
-	const oldId = structure[oldTab.index].id;
-	const newId = structure[newTab.index].id;
-
-	if (oldId == newId) return;
-
-	for (const i in favs) {
-		if (favs[i].me == newId) {
-			favs[i].fav = oldId;
-			return;
-		}
-	}
-	favs.push({ me: newId, fav: oldId });
-	if (favs.length > 44) favs.shift(); // keep this thing performant
-	return success;
+  stream.set(parentId, activeId); // Set the parent tab's downstream
 }
 
-async function focusDownstream() {
-	const myTab = await getActiveTab();
-
-	const structure = await getStructure();
-	const myId = structure[myTab.index].id;
-	const myParent = structure[myTab.index].parent;
-
-	for (let i in favs) {
-		if (favs[i].me == myId) {
-			// Focus to favs[i].fav
-			let success = await browser.runtime.sendMessage(TST_ID, {
-				type: 'focus',
-				tab: favs[i].fav
-			});
-			if (success) return;
-		}
-	}
-
-	// Just focus to the first child
-	// Check that we have a first child
-	if (myTab.index >= structure.length-1) {
-		return;
-	}
-	if (structure[myTab.index+1].parent <= myParent) {
-		return;
-	}
-	// Ok, yes we do have a first child
-	await browser.runtime.sendMessage(TST_ID, {
-		type: 'focus',
-		tab: 'next', // required, tabs.Tab.id or alias
-	});
-}
-
-async function focusFirstChild() {
-	const myTab = await getActiveTab();
-	const myIndex = myTab.index;
-
-	const structure = await getStructure();
-
-	if (myIndex == structure.length - 1) {
-		return;
-	}
-	if (structure[myIndex + 1].parent <= structure[myIndex].parent) {
-		return;
-	}
-	await focus('next');
-}
-
-async function focusSiblingNumber(input) {
-	const activeTab = await getActiveTab();
-	const myIndex = activeTab.index;
-
-	const structure = await getStructure();
-	const myParent = structure[myIndex].parent;
-
-	// Calibrate i to be the starting index of the tree we're in
-	let i = 0;
-	if (myParent >= 0) {
-		for (let j = 0; j < myIndex; j++) {
-			if (structure[j].parent == -1) {
-				i = j;
-			}
-		}
-	}
-
-	let counter = 0;
-	let targetIndex = myIndex;
-	while (counter < input) {
-		if (structure[i].parent == myParent) {
-			counter++;
-			targetIndex = i;
-		}
-		i++;
-		if (i >= structure.length) {
-			break;
-		}
-		if (i > myIndex && structure[i].parent < myParent) {
-			// We have found an aunt, not a sister or niece. Use whatever targetIndex was last found.
-			break;
-		}
-	}
-
-	await focus(structure[targetIndex].id);
-}
-
-async function createChildTab() {
-	const activeTab = await getActiveTab();
-	await browser.tabs.create({
-		openerTabId: activeTab.id // optional, tabs.Tab.id
-	});
-}
-
-async function createSiblingTab() {
-	// create a child tab, then promote it to a sibling
-	await createChildTab();
-	await browser.runtime.sendMessage(TST_ID, {
-		type:           'outdent', // or 'promote'
-		tab:            'current', // required, tabs.Tab.id or alias
-		followChildren: false // optional, boolean (default=false)
-	});
-}
-
-async function closeTree() {
-	await closeChildren();
-	const activeTab = await getActiveTab();
-	await browser.tabs.remove(activeTab.id);
-}
-
-async function closeChildren() {
-	const activeTab = await getActiveTab();
-	const structure = await getStructure();
-	const myParent = structure[activeTab.index].parent;
-	const allTabs = await browser.tabs.query({ currentWindow: true });
-
-	for (let i = activeTab.index + 1; i < structure.length; i++)
-	{
-		if (structure[i].parent <= myParent) {
-			break;
-		}
-		browser.tabs.remove(allTabs[i].id);
-	}
-}
-
+// Focus the root of the tree. For each ancestor, update its downstream to the descendant who
+// leads to the previously active tab.
 async function focusRootSetDownstream() {
-	const activeTab = await getActiveTab();
-	let myIndex = activeTab.index;
+  const tree = await getStructure('active');
 
-	const structure = await getStructure();
-	if (structure[myIndex].parent == -1) {
-		return;
-	}
+  // Set downstream values of all ancestors
+  let currentId = tree.id
+  for (const parentId of tree.ancestorTabIds) {
+    stream.set(parentId, currentId);
+    currentId = parentId;
+  }
 
-	// Calibrate i to be the starting index of the tree we're in
-	let treeIndex = 0;
-	for (let j = 0; j < myIndex; j++) {
-		if (structure[j].parent == -1) {
-			treeIndex = j;
-		}
-	}
+  focus(currentId); // currentId now points to the root of the tree
+}
 
-	while (myIndex > treeIndex) {
-		const parentIndex = treeIndex + structure[myIndex].parent;
-		const oldId = structure[myIndex].id;
-		const newId = structure[parentIndex].id;
+// Focus the tab that was set as the active tab's downstream, so long as that downstream tab still
+// exists and is a child of the active tab. Otherwise, focus the first child.
+// Do nothing if there are no children.
+async function focusDownstream() {
+  const tree = await getStructure('active');
+  // Ensure that the active tab has children
+  if (!tree.children.length) {
+    return;
+  }
 
-		for (const i in favs) {
-			if (favs[i].me == newId) {
-				favs[i].fav = oldId;
-				continue;
-			}
-		}
+  const activeId = tree.id;
+  const downstreamId = stream.get(activeId);
 
-		favs.push({ me: newId, fav: oldId });
-		if (favs.length > 44) {
-			favs.shift(); // keep this thing performant
-		}
-		myIndex = parentIndex
-	}
-	await focus('root');
+  for (const { id } of tree.children) {
+    if (id == downstreamId) {
+      await focus(downstreamId);
+      return;
+    }
+  }
+
+  focus(tree.children[0].id); // This will focus the first child
+}
+
+async function indentTree() {
+  browser.runtime.sendMessage(TST_ID, {
+    type: 'indent',
+    tab: 'active',
+    followChildren: true
+  });
+}
+
+async function outdentTreeSafe() {
+  let tree = await getStructure('active');
+  if (!tree.ancestorTabIds.length) {
+    return;
+  }
+
+  const activeId = tree.id;
+  const parentId = tree.ancestorTabIds[0];
+
+  // Perform the outdentation
+  await browser.runtime.sendMessage(TST_ID, {
+    type: 'outdent',
+    tab: activeId,
+    followChildren: true
+  });
+
+  // Collapse the tab that was a parent, is now a sibling
+  browser.runtime.sendMessage(TST_ID, {
+    type: 'collapse-tree',
+    tab: parentId
+  });
+}
+
+// Focuses a sibling of the active tab, or indeed the active tab itself, based on its number. The
+// number of the first sibling is 1, and the number of the second sibling is 2, etc.
+// If the number passed in is too high, the last sibling will be focused.
+async function focusSiblingNumber(number) {
+  const tree = await getStructure('parent');
+
+  // Get an array of the active tab's siblings
+  let siblings;
+  if (tree) {
+    siblings = tree.children;
+  }
+  else { // If the active tab is at the root level, it has no parent and tree is null.
+    // Get the array of siblings another way. First, find the ID of the active WINDOW
+    const [{ windowId },] = await browser.tabs.query({ active: true, currentWindow: true });
+
+    // This is how to get an array of all root-level tabs in a window using the API
+    siblings = await browser.runtime.sendMessage(TST_ID, {
+      type: 'get-tree',
+      window: windowId,
+    });
+  }
+
+  if (number > siblings.length) {
+    number = siblings.length;
+  }
+
+  const siblingId = siblings[number - 1].id;
+  focus(siblingId);
 }
